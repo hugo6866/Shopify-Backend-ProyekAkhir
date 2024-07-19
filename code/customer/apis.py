@@ -59,7 +59,7 @@ def add_customer(request, id_cust: int, data: AddressIn):
     )
     return {'customer_address': [customer_address]}
 
-@api.put('customers/{id_cust}/addresses/{id_addr}/default.json',response=AddressResp)
+@api.put('customers/{id_cust}/addresses/{id_addr}/default.json',auth=apiAuth, response=AddressResp)
 def set_default_address(request,id_cust:int,id_addr:int):
     addr = Address.objects.get(pk=id_addr)
     addr.default = True
@@ -71,17 +71,17 @@ def set_default_address(request,id_cust:int,id_addr:int):
         
     return {'customer_address': [addr]}
 
-@api.delete('customers/{id_cust}/addresses/{id_addr}.json')
+@api.delete('customers/{id_cust}/addresses/{id_addr}.json',auth=apiAuth)
 def delete_address(request,id_cust:int,id_addr:int):
     Address.objects.get(pk=id_addr).delete()
     return {}
 
-@api.get('products.json', response=ProductResp)
+@api.get('products.json', response=ProductResp, auth=apiAuth)
 def get_all_products(request):
     products = Product.objects.all()
     return {'products': products}
 
-@api.post("products.json", response=ProductResp)
+@api.post("products.json", response=ProductResp, auth=apiAuth)
 def add_product(request, data: ProductIn):
     products = Product.objects.create(
         title=data.title,
@@ -100,12 +100,12 @@ def add_product(request, data: ProductIn):
     
     return {"products": [products]} 
 
-@api.delete('/products/{id_product}.json')
+@api.delete('/products/{id_product}.json', auth=apiAuth)
 def delete_product(request,id_product:int):
     Product.objects.get(pk=id_product).delete()
     return {}
 
-@api.post("gift_cards.json", response=GiftCardDetailOut)
+@api.post("gift_cards.json", response=GiftCardDetailOut,auth=apiAuth)
 def add_gift_card(request, data: GiftCardIn):
     gift_card = GiftCard.objects.create(
         balance=data.initial_value,
@@ -117,19 +117,19 @@ def add_gift_card(request, data: GiftCardIn):
     )
     return gift_card
 
-@api.get("gift_cards.json", response=GiftCardResp)
+@api.get("gift_cards.json", response=GiftCardResp, auth=apiAuth)
 def get_all_gift_cards(request):
     gift_card = GiftCard.objects.all()
     return {"gift_card": gift_card}
 
-@api.post("gift_cards/{id_gift_card}/disable.json", response=GiftCardResp)
+@api.post("gift_cards/{id_gift_card}/disable.json", response=GiftCardResp, auth=apiAuth)
 def disable_gift_card(request, id_gift_card: int):
     gift_card = GiftCard.objects.get(pk=id_gift_card)
     gift_card.disabled_at = datetime.now()
     gift_card.save()
     return {"gift_card": [gift_card]}
 
-@api.post("application_charges.json", response=BillingResp)
+@api.post("application_charges.json", response=BillingResp, auth=apiAuth)
 def create_application_charge(request, data: BillingIn):
     charge_data = data.application_charge
     application_charge = Billing.objects.create(
@@ -149,12 +149,12 @@ def create_application_charge(request, data: BillingIn):
 
     return {"application_charge": [billings]}
 
-@api.get("application_charges.json", response=BillingResp)
+@api.get("application_charges.json", response=BillingResp, auth=apiAuth)
 def get_application_charges(request):
     billings = Billing.objects.all()
     return {"application_charge": billings}
 
-@api.post('/price_rules/{price_rule_id}/batch.json', response=DiscountBatchOut)
+@api.post('/price_rules/{price_rule_id}/batch.json', response=DiscountBatchOut, auth=apiAuth)
 def create_discount_batch(request, price_rule_id: int, data: DiscountBatchIn):
     created_at = datetime.now()
     discount_code_creation = DiscountCodeCreationJob.objects.create(
@@ -192,7 +192,7 @@ def create_discount_batch(request, price_rule_id: int, data: DiscountBatchIn):
 
     return {"discount_code_creation": discount_code_creation_data}
 
-@api.post('/price_rules/{price_rule_id}/discount_codes.json', response=SingleDiscountCodeResp)
+@api.post('/price_rules/{price_rule_id}/discount_codes.json',auth=apiAuth, response=SingleDiscountCodeResp)
 def create_single_discount_code(request, price_rule_id: int, data: SingleDiscountCodeIn):
     created_at = datetime.now()
     code = data.discount_code.code
@@ -224,12 +224,12 @@ def create_single_discount_code(request, price_rule_id: int, data: SingleDiscoun
 
     return {"discount_code": discount_code_response}
 
-@api.get('/discount_codes/count.json')
+@api.get('/discount_codes/count.json', auth=apiAuth)
 def get_discount_code_count(request):
     count = DiscountCode.objects.count()
     return {"count": count}
 
-@api.get('/price_rules/{price_rule_id}/batch/{batch_id}.json', response=DiscountCodeCreationResp)
+@api.get('/price_rules/{price_rule_id}/batch/{batch_id}.json',auth=apiAuth, response=DiscountCodeCreationResp)
 def get_discount_code_creation(request, price_rule_id: int, batch_id: int):
     discount_code_creation = DiscountCodeCreationJob.objects.filter(price_rule_id=price_rule_id, id=batch_id).first()
     discount_code_creation_data = {
@@ -249,7 +249,7 @@ def get_discount_code_creation(request, price_rule_id: int, batch_id: int):
     return {"discount_code_creation": discount_code_creation_data}
 
 
-@api.delete('/price_rules/{price_rule_id}/discount_codes/{discount_code_id}.json', response={204: None})
+@api.delete('/price_rules/{price_rule_id}/discount_codes/{discount_code_id}.json',auth=apiAuth, response={204: None})
 def delete_discount_code(request, price_rule_id: int, discount_code_id: int):
     discount_code = DiscountCode.objects.get(id=discount_code_id, creation_job__price_rule_id=price_rule_id)
     discount_code.delete()
@@ -283,7 +283,7 @@ def create_order(request, data: OrderIn):
 
     return {"order": order}
 
-@api.post('/orders/{order_id}/cancel.json', response=CancelOrderResp)
+@api.post('/orders/{order_id}/cancel.json', response=CancelOrderResp, auth=apiAuth)
 def cancel_order(request, order_id: int, data: CancelOrderIn):
     try:
         order = Order.objects.get(pk=order_id)
@@ -294,7 +294,7 @@ def cancel_order(request, order_id: int, data: CancelOrderIn):
     except Order.DoesNotExist:
         return {"detail": "Order not found"}, 404
 
-@api.get('/orders.json', response=OrdersResp)
+@api.get('/orders.json', response=OrdersResp, auth=apiAuth)
 def list_orders(request, status: Optional[str] = Query(None)):
     if status == 'any':
         orders = Order.objects.all()
@@ -303,7 +303,7 @@ def list_orders(request, status: Optional[str] = Query(None)):
     
     return {"orders": [OrderOut.from_orm(order) for order in orders]}
 
-@api.get('/orders/count.json')
+@api.get('/orders/count.json', auth=apiAuth)
 def get_orders_count(request, status: Optional[str] = Query(None)):
     if status == 'any':
         orders = Order.objects.all()
@@ -312,7 +312,7 @@ def get_orders_count(request, status: Optional[str] = Query(None)):
     count = orders.count()
     return {"count": count}
 
-@api.delete('/orders/{order_id}.json')
+@api.delete('/orders/{order_id}.json', auth=apiAuth)
 def delete_order(request, order_id: int):
     try:
         order = Order.objects.get(pk=order_id)
@@ -322,7 +322,7 @@ def delete_order(request, order_id: int):
         return {"detail": "Order not found"}, 404
 
 
-@api.post('/orders/{order_id}/close.json', response=OrderResp)
+@api.post('/orders/{order_id}/close.json', response=OrderResp, auth=apiAuth)
 def close_order(request, order_id: int):
     try:
         order = Order.objects.get(pk=order_id)
@@ -332,7 +332,7 @@ def close_order(request, order_id: int):
     except Order.DoesNotExist:
         return {"detail": "Order not found"}, 404
     
-@api.post('/orders/{order_id}/open.json', response=OrderResp)
+@api.post('/orders/{order_id}/open.json', response=OrderResp, auth=apiAuth)
 def open_order(request, order_id: int):
     try:
         order = Order.objects.get(pk=order_id)
